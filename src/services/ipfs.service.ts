@@ -7,6 +7,7 @@ class IPFSService {
     private storageLimit: number;
 
     constructor() {
+        // Initialize Pinata with API key and secret key
         this.pinata = new pinataSDK(
             config.pinataApiKey,
             config.pinataSecretKey
@@ -19,12 +20,16 @@ class IPFSService {
             // Convert buffer to readable stream
             const stream = Readable.from(chunk);
 
-            // Upload to IPFS via Pinata
+            // Upload to IPFS via Pinata (this automatically pins the file)
             const result = await this.pinata.pinFileToIPFS(stream, {
                 pinataMetadata: {
                     name: fileName
                 }
             });
+
+            if (!result || !result.IpfsHash) {
+                throw new Error('No CID returned from IPFS upload');
+            }
 
             return result.IpfsHash; // This is the CID
         } catch (error) {
@@ -57,24 +62,8 @@ class IPFSService {
             throw new Error('Failed to retrieve file from IPFS');
         }
     }
-
-    async pinFile(cid: string): Promise<void> {
-        try {
-            await this.pinata.pinByHash(cid);
-        } catch (error) {
-            console.error('Error pinning file:', error);
-            throw new Error('Failed to pin file');
-        }
-    }
-
-    async unpinFile(cid: string): Promise<void> {
-        try {
-            await this.pinata.unpin(cid);
-        } catch (error) {
-            console.error('Error unpinning file:', error);
-            throw new Error('Failed to unpin file');
-        }
-    }
 }
 
 export const ipfsService = new IPFSService(); 
+ 
+ 

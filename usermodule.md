@@ -20,6 +20,7 @@ a@a:~/storef$ curl -X POST http://localhost:5000/api/auth/verify-email -H "Conte
 a@a:~/storef$ curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "wisdomabraham92@gmail.com", "password": "Test@123"}'
-{"success":true,"message":"Login successful","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDY4OGMzNTNlNTQzZTAzMWYzYjAxOCIsImlhdCI6MTc0OTQ1NDQzMywiZXhwIjoxNzQ5NTQwODMzfQ.wmCOfR7Go0nFbovcAg0yvL6KRJYSwpUQf-bdCS5FGzY","user":{"id":"684688c353e543e031f3b018","email":"wisdomabraham92@gmail.com","username":"wisdom","isVerified":true}}a@a:~/storef$ 
+{"success":true,"message":"Login successful","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDY4OGMzNTNlNTQzZTAzMWYzYjAxOCIsImlhdCI6MTc0OTU0Nzc1MSwiZXhwIjoxNzQ5NjM0MTUxfQ.RTEcpph0K6tgddotSjpL1RFnMQyWwxDfBBkHLxK7f6c","user":{"id":"684688c353e543e031f3b018","email":"wisdomabraham92@gmail.com","username":"wisdom","isVerified":true}}a@a:~/storef$ 
+
 
 

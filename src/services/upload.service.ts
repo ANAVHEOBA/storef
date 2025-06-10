@@ -1,8 +1,9 @@
 import { ChunkStatus } from '../modules/file/file.model';
-import { File } from '../modules/file/file.schema';
+import { File as FileModel } from '../modules/file/file.schema';
 import { updateChunkStatus, validateChunk } from '../modules/file/file.crud';
-import filecoinStorage from './filecoinStorage';
+import { filecoinStorage } from './filecoinStorage';
 import { ipfsService } from './ipfs.service';
+import { config } from '../config';
 
 interface UploadResponse {
     success: boolean;
@@ -13,9 +14,18 @@ interface UploadResponse {
 
 class UploadService {
     private filecoinStorage = filecoinStorage;
+    private readonly CHUNK_COUNT = 8;
 
     async handleChunkUpload(fileId: string, chunkIndex: number, chunk: Buffer, hash: string): Promise<UploadResponse> {
         try {
+            // Validate chunk index
+            if (chunkIndex < 0 || chunkIndex >= this.CHUNK_COUNT) {
+                return {
+                    success: false,
+                    error: `Invalid chunk index. Must be between 0 and ${this.CHUNK_COUNT - 1}`
+                };
+            }
+
             // Validate chunk
             const isValid = await validateChunk(chunk, hash);
             if (!isValid) {
@@ -28,11 +38,8 @@ class UploadService {
             // Update chunk status to UPLOADING
             await updateChunkStatus(fileId, chunkIndex, ChunkStatus.UPLOADING);
 
-            // First, upload to IPFS
+            // Upload to IPFS (this automatically pins the file)
             const cid = await ipfsService.uploadChunk(chunk, `chunk_${chunkIndex}`);
-            
-            // Pin the file in IPFS
-            await ipfsService.pinFile(cid);
 
             // Update chunk status to UPLOADED with CID
             await updateChunkStatus(fileId, chunkIndex, ChunkStatus.UPLOADED, '', cid);
@@ -59,6 +66,11 @@ class UploadService {
 }
 
 export default new UploadService();
+
+
+
+
+
 
 
 

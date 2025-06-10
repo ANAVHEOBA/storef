@@ -28,5 +28,7 @@ export const config = {
     // IPFS/Pinata Configuration
     pinataApiKey: process.env.PINATA_API_KEY || '',
     pinataSecretKey: process.env.PINATA_SECRET_KEY || '',
+    pinataJWT: process.env.PINATA_JWT || '',
     ipfsStorageLimit: parseInt(process.env.IPFS_STORAGE_LIMIT || '1073741824') // 1GB default
 }; 
+ 

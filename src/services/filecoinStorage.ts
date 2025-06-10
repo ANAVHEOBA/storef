@@ -58,5 +58,4 @@ export class FilecoinStorageService {
     }
 }
 
-export default new FilecoinStorageService(); 
-module.exports = new FilecoinStorageService(); 
+export const filecoinStorage = new FilecoinStorageService(); 

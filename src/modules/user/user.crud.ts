@@ -47,4 +47,3 @@ export const updateVerificationCode = async (
         { new: true }
     );
 };
-

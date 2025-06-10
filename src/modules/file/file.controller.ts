@@ -15,7 +15,7 @@ interface AuthRequest extends Request {
     };
 }
 
-const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
+const CHUNK_COUNT = 8; // Always split into 8 chunks
 const MAX_CHUNK_SIZE = 50 * 1024 * 1024; // 50MB max chunk size
 
 // Configure multer for chunk storage
@@ -49,8 +49,8 @@ export const initiateUpload = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // Calculate number of chunks
-        const chunks = Math.ceil(size / CHUNK_SIZE);
+        // Calculate chunk size to split file into 8 parts
+        const chunkSize = Math.ceil(size / CHUNK_COUNT);
 
         // Create file record
         const file = await createFile({
@@ -60,11 +60,11 @@ export const initiateUpload = async (req: AuthRequest, res: Response) => {
             owner: userId,
             status: FileStatus.PENDING,
             chunks: {
-                total: chunks,
+                total: CHUNK_COUNT,
                 uploaded: 0,
-                status: Array(chunks).fill(ChunkStatus.PENDING),
-                errors: Array(chunks).fill(''),
-                cids: Array(chunks).fill('')  // Initialize CIDs array
+                status: Array(CHUNK_COUNT).fill(ChunkStatus.PENDING),
+                errors: Array(CHUNK_COUNT).fill(''),
+                cids: Array(CHUNK_COUNT).fill('')
             },
             uploadProgress: 0
         });
@@ -74,8 +74,8 @@ export const initiateUpload = async (req: AuthRequest, res: Response) => {
             message: 'Upload initiated successfully',
             fileId: file._id.toString(),
             uploadUrl: `/api/files/chunk/${file._id}`,
-            chunks,
-            chunkSize: CHUNK_SIZE
+            chunks: CHUNK_COUNT,
+            chunkSize: chunkSize
         };
 
         res.status(201).json(response);
@@ -86,7 +86,6 @@ export const initiateUpload = async (req: AuthRequest, res: Response) => {
         });
     }
 };
-
 // Create a middleware to handle the chunk upload
 const uploadChunkMiddleware = upload.single('chunk');
 
@@ -129,6 +128,16 @@ export const uploadChunk = async (req: Request, res: Response): Promise<void> =>
                 return;
             }
 
+            // Validate chunk index
+            const chunkIndexNum = parseInt(chunkIndex);
+            if (chunkIndexNum < 0 || chunkIndexNum >= CHUNK_COUNT) {
+                res.status(400).json({
+                    success: false,
+                    error: `Invalid chunk index. Must be between 0 and ${CHUNK_COUNT - 1}`
+                });
+                return;
+            }
+
             // Calculate hash of the received chunk
             const receivedHash = crypto.createHash('sha256').update(chunk.buffer).digest('hex');
             
@@ -143,7 +152,7 @@ export const uploadChunk = async (req: Request, res: Response): Promise<void> =>
 
             const result = await uploadService.handleChunkUpload(
                 id,
-                parseInt(chunkIndex),
+                chunkIndexNum,
                 chunk.buffer,
                 hash
             );
@@ -168,7 +177,7 @@ export const uploadChunk = async (req: Request, res: Response): Promise<void> =>
                 message: 'Chunk uploaded successfully',
                 progress: updatedFile.uploadProgress,
                 uploadedChunks: updatedFile.chunks.uploaded,
-                totalChunks: updatedFile.chunks.total
+                totalChunks: CHUNK_COUNT
             };
 
             res.json(response);
@@ -181,3 +190,4 @@ export const uploadChunk = async (req: Request, res: Response): Promise<void> =>
         }
     });
 };
+

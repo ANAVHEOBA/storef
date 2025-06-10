@@ -1,0 +1,7 @@
+# Filecoin Storage Backend
+
+This project provides a backend service for storing data on the Filecoin network using Lighthouse.storage.
+
+## Setup
+
+1. Install dependencies:

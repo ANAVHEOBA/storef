@@ -3,6 +3,18 @@ import { IFile, FileStatus, ChunkStatus } from './file.model';
 import crypto from 'crypto';
 
 export const createFile = async (fileData: Partial<IFile>) => {
+    // Ensure chunks object is properly initialized
+    if (fileData.chunks) {
+        const totalChunks = fileData.chunks.total;
+        fileData.chunks = {
+            total: totalChunks,
+            uploaded: 0,
+            status: Array(totalChunks).fill(ChunkStatus.PENDING),
+            errors: Array(totalChunks).fill(''),
+            cids: Array(totalChunks).fill('')
+        };
+    }
+    
     const file = new File(fileData);
     return await file.save();
 };
@@ -94,4 +106,12 @@ export const getChunkStatus = async (fileId: string, chunkIndex: number) => {
         error: file.chunks.errors[chunkIndex],
         cid: file.chunks.cids[chunkIndex]
     };
+};
+
+export const updateUploadedChunks = async (id: string, uploadedChunks: number) => {
+    return await File.findByIdAndUpdate(
+        id,
+        { uploadedChunks },
+        { new: true }
+    );
 };
