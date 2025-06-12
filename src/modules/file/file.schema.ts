@@ -41,7 +41,10 @@ const fileSchema = new mongoose.Schema<IFile>({
         errors: [{
             type: String
         }],
-        cids: [{
+        ipfsCids: [{
+            type: String
+        }],
+        filecoinDealIds: [{
             type: String
         }]
     },
@@ -49,10 +52,10 @@ const fileSchema = new mongoose.Schema<IFile>({
         type: Number,
         default: 0
     },
-    cid: {
+    ipfsCid: {
         type: String
     },
-    storageDealId: {
+    filecoinDealId: {
         type: String
     }
 }, {
@@ -61,6 +64,7 @@ const fileSchema = new mongoose.Schema<IFile>({
 
 // Indexes
 fileSchema.index({ owner: 1, status: 1 });
-fileSchema.index({ cid: 1 });
+fileSchema.index({ ipfsCid: 1 });
+fileSchema.index({ filecoinDealId: 1 });
 
 export const File = mongoose.model<IFile>('File', fileSchema);

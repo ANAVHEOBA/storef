@@ -19,7 +19,8 @@ export interface IChunk {
     hash: string;
     status: ChunkStatus;
     error?: string;
-    cid?: string;
+    ipfsCid?: string;
+    filecoinDealId?: string;
 }
 
 export interface IFile {
@@ -34,11 +35,12 @@ export interface IFile {
         uploaded: number;
         status: ChunkStatus[];
         errors: string[];
-        cids: string[];
+        ipfsCids: string[];
+        filecoinDealIds: string[];
     };
     uploadProgress: number;
-    cid?: string;
-    storageDealId?: string;
+    ipfsCid?: string;
+    filecoinDealId?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -58,5 +60,6 @@ export interface IChunkUploadResponse {
     progress: number;
     uploadedChunks: number;
     totalChunks: number;
-    cid?: string;
+    ipfsCid?: string;
+    filecoinDealId?: string;
 } 

@@ -9,7 +9,8 @@ interface UploadResponse {
     success: boolean;
     message?: string;
     error?: string;
-    cid?: string;
+    ipfsCid?: string;
+    filecoinDealId?: string;
 }
 
 class UploadService {
@@ -38,25 +39,35 @@ class UploadService {
             // Update chunk status to UPLOADING
             await updateChunkStatus(fileId, chunkIndex, ChunkStatus.UPLOADING);
 
-            // Upload to IPFS (this automatically pins the file)
-            const cid = await ipfsService.uploadChunk(chunk, `chunk_${chunkIndex}`);
+            // Upload to both IPFS and Filecoin simultaneously
+            const [ipfsResult, filecoinResult] = await Promise.all([
+                ipfsService.uploadChunk(chunk, `chunk_${chunkIndex}`),
+                this.filecoinStorage.storeWithLighthouse(chunk)
+            ]);
 
-            // Update chunk status to UPLOADED with CID
-            await updateChunkStatus(fileId, chunkIndex, ChunkStatus.UPLOADED, '', cid);
-
-            // Store chunk in Filecoin (optional, can be done later)
-            const storageResult = await this.filecoinStorage.storeWithLighthouse(chunk);
-            if (!storageResult.success) {
-                console.warn(`Filecoin storage failed for chunk ${chunkIndex}, but IPFS upload successful`);
-            }
+            // Update chunk status with both results
+            await updateChunkStatus(
+                fileId,
+                chunkIndex,
+                ChunkStatus.UPLOADED,
+                '',
+                ipfsResult,
+                filecoinResult.data?.dealId
+            );
 
             return {
                 success: true,
                 message: 'Chunk uploaded and stored successfully',
-                cid: cid
+                ipfsCid: ipfsResult,
+                filecoinDealId: filecoinResult.data?.dealId
             };
         } catch (error) {
-            await updateChunkStatus(fileId, chunkIndex, ChunkStatus.FAILED, error instanceof Error ? error.message : 'Unknown error');
+            await updateChunkStatus(
+                fileId,
+                chunkIndex,
+                ChunkStatus.FAILED,
+                error instanceof Error ? error.message : 'Unknown error'
+            );
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error occurred'

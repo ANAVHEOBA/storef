@@ -11,7 +11,8 @@ export const createFile = async (fileData: Partial<IFile>) => {
             uploaded: 0,
             status: Array(totalChunks).fill(ChunkStatus.PENDING),
             errors: Array(totalChunks).fill(''),
-            cids: Array(totalChunks).fill('')
+            ipfsCids: Array(totalChunks).fill(''),
+            filecoinDealIds: Array(totalChunks).fill('')
         };
     }
     
@@ -40,7 +41,8 @@ export const updateChunkStatus = async (
     chunkIndex: number,
     status: ChunkStatus,
     error?: string,
-    cid?: string
+    ipfsCid?: string,
+    filecoinDealId?: string
 ) => {
     const file = await File.findById(fileId);
     if (!file) return null;
@@ -52,8 +54,11 @@ export const updateChunkStatus = async (
     if (!file.chunks.errors) {
         file.chunks.errors = Array(file.chunks.total).fill('');
     }
-    if (!file.chunks.cids) {
-        file.chunks.cids = Array(file.chunks.total).fill('');
+    if (!file.chunks.ipfsCids) {
+        file.chunks.ipfsCids = Array(file.chunks.total).fill('');
+    }
+    if (!file.chunks.filecoinDealIds) {
+        file.chunks.filecoinDealIds = Array(file.chunks.total).fill('');
     }
 
     // Ensure arrays are long enough
@@ -63,8 +68,11 @@ export const updateChunkStatus = async (
     while (file.chunks.errors.length <= chunkIndex) {
         file.chunks.errors.push('');
     }
-    while (file.chunks.cids.length <= chunkIndex) {
-        file.chunks.cids.push('');
+    while (file.chunks.ipfsCids.length <= chunkIndex) {
+        file.chunks.ipfsCids.push('');
+    }
+    while (file.chunks.filecoinDealIds.length <= chunkIndex) {
+        file.chunks.filecoinDealIds.push('');
     }
 
     // Update chunk status
@@ -72,12 +80,17 @@ export const updateChunkStatus = async (
     if (error) {
         file.chunks.errors[chunkIndex] = error;
     }
-    if (cid) {
-        file.chunks.cids[chunkIndex] = cid;
+    if (ipfsCid) {
+        file.chunks.ipfsCids[chunkIndex] = ipfsCid;
+    }
+    if (filecoinDealId) {
+        file.chunks.filecoinDealIds[chunkIndex] = filecoinDealId;
     }
 
-    // Update uploaded count if chunk is uploaded
-    if (status === ChunkStatus.UPLOADED) {
+    // Update uploaded count if both IPFS and Filecoin are done
+    if (status === ChunkStatus.UPLOADED && 
+        file.chunks.ipfsCids[chunkIndex] && 
+        file.chunks.filecoinDealIds[chunkIndex]) {
         file.chunks.uploaded += 1;
     }
 
@@ -104,7 +117,8 @@ export const getChunkStatus = async (fileId: string, chunkIndex: number) => {
     return {
         status: file.chunks.status[chunkIndex],
         error: file.chunks.errors[chunkIndex],
-        cid: file.chunks.cids[chunkIndex]
+        ipfsCid: file.chunks.ipfsCids[chunkIndex],
+        filecoinDealId: file.chunks.filecoinDealIds[chunkIndex]
     };
 };
 

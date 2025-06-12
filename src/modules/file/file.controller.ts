@@ -64,7 +64,8 @@ export const initiateUpload = async (req: AuthRequest, res: Response) => {
                 uploaded: 0,
                 status: Array(CHUNK_COUNT).fill(ChunkStatus.PENDING),
                 errors: Array(CHUNK_COUNT).fill(''),
-                cids: Array(CHUNK_COUNT).fill('')
+                ipfsCids: Array(CHUNK_COUNT).fill(''),
+                filecoinDealIds: Array(CHUNK_COUNT).fill('')
             },
             uploadProgress: 0
         });
@@ -86,6 +87,7 @@ export const initiateUpload = async (req: AuthRequest, res: Response) => {
         });
     }
 };
+
 // Create a middleware to handle the chunk upload
 const uploadChunkMiddleware = upload.single('chunk');
 
@@ -177,7 +179,9 @@ export const uploadChunk = async (req: Request, res: Response): Promise<void> =>
                 message: 'Chunk uploaded successfully',
                 progress: updatedFile.uploadProgress,
                 uploadedChunks: updatedFile.chunks.uploaded,
-                totalChunks: CHUNK_COUNT
+                totalChunks: CHUNK_COUNT,
+                ipfsCid: result.ipfsCid,
+                filecoinDealId: result.filecoinDealId
             };
 
             res.json(response);
