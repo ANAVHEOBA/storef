@@ -38,3 +38,4 @@ export const updateVideo = async (
 export const deleteVideo = async (videoId: string): Promise<IVideo | null> => {
     return await Video.findByIdAndDelete(videoId);
 };
+

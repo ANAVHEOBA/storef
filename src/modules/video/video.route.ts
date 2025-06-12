@@ -5,7 +5,8 @@ import { uploadSchema, videoIdSchema } from './video.schema';
 import { 
     processVideo, 
     getStatus, 
-    getMetadata, 
+    getMetadata,
+    getVideoQuality,
     deleteVideoHandler 
 } from './video.controller';
 import multer from 'multer';
@@ -34,6 +35,13 @@ router.get(
     '/metadata/:videoId',
     validateRequest as RequestHandler,
     getMetadata as RequestHandler
+);
+
+// New route for getting specific video quality
+router.get(
+    '/:videoId/quality',
+    validateRequest as RequestHandler,
+    getVideoQuality as RequestHandler
 );
 
 router.delete(

@@ -14,7 +14,7 @@ export const config = {
     nodeEnv: process.env.NODE_ENV || 'development',
 
     // MongoDB Configuration
-    mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/storef',
+    mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/storef',
 
     // Ethereum Configuration
     ethPrivateKey: process.env.ETH_PRIVATE_KEY,

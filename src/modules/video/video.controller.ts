@@ -13,6 +13,26 @@ import path from 'path';
 import fs from 'fs';
 import { uploadFileToSynapse } from '../../services/synapse.service';
 
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+// Cache for transcoded files with TTL
+const transcodingCache = new Map<string, { path: string; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour in milliseconds
+const SUPPORTED_RESOLUTIONS = ['1920x1080', '1280x720', '854x480'];
+
+// Cleanup cache periodically
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of transcodingCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) {
+            // Delete the file and remove from cache
+            fs.promises.unlink(value.path)
+                .catch(err => console.error(`Failed to delete cached file ${value.path}:`, err));
+            transcodingCache.delete(key);
+        }
+    }
+}, CACHE_TTL);
+
 // Process video upload
 export const processVideo = async (req: AuthRequest, res: Response) => {
     try {
@@ -50,6 +70,71 @@ export const processVideo = async (req: AuthRequest, res: Response) => {
             videoId: video._id,
             message: 'Video processing started'
         });
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+// Get specific video quality
+export const getVideoQuality = async (req: AuthRequest, res: Response) => {
+    try {
+        const { videoId } = req.params;
+        const { quality } = req.query;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'Authentication required' });
+        }
+
+        if (!quality || !SUPPORTED_RESOLUTIONS.includes(quality as string)) {
+            return res.status(400).json({
+                success: false,
+                error: `Invalid quality. Supported resolutions: ${SUPPORTED_RESOLUTIONS.join(', ')}`
+            });
+        }
+
+        const video = await getVideoById(videoId);
+        if (!video) {
+            return res.status(404).json({ success: false, error: 'Video not found' });
+        }
+
+        if (video.userId !== userId) {
+            return res.status(403).json({ success: false, error: 'Not authorized to access this video' });
+        }
+
+        // Check cache first
+        const cacheKey = `${videoId}-${quality}`;
+        const cached = transcodingCache.get(cacheKey);
+        if (cached && fs.existsSync(cached.path)) {
+            return res.sendFile(cached.path);
+        }
+
+        // If not in cache, transcode on-the-fly
+        const outputDir = 'uploads';
+        const outputFilename = `${videoId}_${quality}_${Date.now()}.mp4`;
+        const outputPath = path.join(outputDir, outputFilename);
+
+        await new Promise<void>((resolve, reject) => {
+            ffmpeg(video.files.original.cdnUrl)
+                .videoCodec('libx264')
+                .size(quality as string)
+                .on('error', (err) => reject(new Error(`Transcoding failed: ${err.message}`)))
+                .on('end', () => {
+                    // Add to cache
+                    transcodingCache.set(cacheKey, {
+                        path: outputPath,
+                        timestamp: Date.now()
+                    });
+                    resolve();
+                })
+                .save(outputPath);
+        });
+
+        res.sendFile(outputPath);
+
     } catch (error: any) {
         res.status(500).json({
             success: false,
@@ -210,64 +295,47 @@ async function processVideoAsync(videoId: string, file: Express.Multer.File) {
         videoToUpdate.files.original = { path: videoPath };
         await videoToUpdate.save();
 
-        // 2. Transcode locally and generate thumbnail
-        const targetResolutions = ['1920x1080', '1280x720'];
-        const processedFiles: { resolution: string; path: string }[] = [];
-        const outputDir = path.dirname(videoPath);
-        const transcodingPromises = targetResolutions.map(res => {
-            return new Promise<void>((resolve, reject) => {
-                const outputFilename = `${path.basename(videoPath, path.extname(videoPath))}_${res.split('x')[1]}p.mp4`;
-                const outputPath = path.join(outputDir, outputFilename);
-                ffmpeg(videoPath).videoCodec('libx264').size(res)
-                    .on('error', (err) => reject(new Error(`Transcoding to ${res} failed: ${err.message}`)))
-                    .on('end', () => {
-                        processedFiles.push({ resolution: res, path: outputPath });
-                        resolve();
-                    }).save(outputPath);
-            });
-        });
-        const thumbnailPromise = new Promise<string>((resolve, reject) => {
-            const thumbFilename = `${path.basename(videoPath, path.extname(videoPath))}_thumb.jpg`;
-            const thumbPath = path.join(outputDir, thumbFilename);
-            ffmpeg(videoPath).screenshots({ timestamps: ['50%'], filename: thumbFilename, folder: outputDir, size: '640x360' })
-                .on('end', () => resolve(thumbPath))
+        // 2. Upload original file to Synapse/FileCDN
+        console.log('Uploading original file to Synapse/FileCDN...');
+        const { cdnUrl, commp } = await uploadFileToSynapse(videoPath);
+        videoToUpdate.files.original = { path: videoPath, cdnUrl, commp };
+        await videoToUpdate.save();
+        console.log('Original file uploaded successfully to FileCDN');
+
+        // 3. Generate thumbnail only
+        const thumbFilename = `${path.basename(videoPath, path.extname(videoPath))}_thumb.jpg`;
+        const thumbPath = path.join(path.dirname(videoPath), thumbFilename);
+        await new Promise<void>((resolve, reject) => {
+            ffmpeg(videoPath)
+                .screenshots({
+                    timestamps: ['50%'],
+                    filename: thumbFilename,
+                    folder: path.dirname(videoPath),
+                    size: '640x360'
+                })
+                .on('end', () => resolve())
                 .on('error', (err) => reject(new Error(`Thumbnail generation failed: ${err.message}`)));
         });
 
-        const [thumbnailPath] = await Promise.all([thumbnailPromise, Promise.all(transcodingPromises)]);
-        
-        // 3. Upload all generated files to Synapse
+        // 4. Save thumbnail path
         const video = await getVideoById(videoId);
         if (!video) throw new Error('Video not found after processing.');
-
-        const originalUploadResult = await uploadFileToSynapse(videoPath);
-        video.files.original = { path: videoPath, ...originalUploadResult };
-
-        const thumbnailUploadResult = await uploadFileToSynapse(thumbnailPath);
-        video.files.thumbnail = { path: thumbnailPath, ...thumbnailUploadResult };
-
-        const processedFileUploads = await Promise.all(
-            processedFiles.map(async (file) => {
-                const { cdnUrl, commp } = await uploadFileToSynapse(file.path);
-                return { ...file, cdnUrl, commp };
-            })
-        );
-        video.files.processed = processedFileUploads;
+        video.files.thumbnail = { path: thumbPath };
         
-        // 4. Final update and cleanup
+        // 5. Final update
         video.status = VideoStatus.COMPLETED;
-        video.metadata.resolutions = [originalResolution, ...processedFiles.map(f => f.resolution)];
+        video.metadata.resolutions = SUPPORTED_RESOLUTIONS;
         await video.save();
-        console.log('Video processing and Synapse upload completed.');
+        console.log('Video processing completed. Original file on FileCDN.');
 
-        // 5. Cleanup local files
-        const filesToDelete = [videoPath, thumbnailPath, ...processedFiles.map(f => f.path)];
-        for (const filePath of filesToDelete) {
-            fs.promises.unlink(filePath).catch(err => console.error(`Failed to delete temp file ${filePath}`, err));
-        }
+        // 6. Cleanup original file since it's on FileCDN
+        fs.promises.unlink(videoPath)
+            .then(() => console.log('Original file cleaned up from uploads folder'))
+            .catch(err => console.error(`Warning: Failed to delete original file ${videoPath}`, err));
 
     } catch (error: any) {
         console.error('Video processing failed:', error.message);
         await updateVideoStatus(videoId, VideoStatus.FAILED);
     }
 }
+
