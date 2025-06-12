@@ -1,38 +1,20 @@
-import Joi from 'joi';
+import { z } from 'zod';
 
-export const uploadSchema = {
-    body: Joi.object({
-        file: Joi.any().required()
-    })
-};
+export const uploadSchema = z.object({
+    file: z.any()
+});
 
-export const videoIdSchema = {
-    params: Joi.object({
-        videoId: Joi.string().required()
-    })
-};
+export const videoIdSchema = z.object({
+    videoId: z.string()
+});
 
-export const updateVideoSchema = {
-    params: Joi.object({
-        videoId: Joi.string().required()
-    }),
-    body: Joi.object({
-        status: Joi.string().valid('processing', 'completed', 'failed'),
-        metadata: Joi.object({
-            duration: Joi.number(),
-            size: Joi.number(),
-            resolutions: Joi.array().items(Joi.string())
-        }),
-        files: Joi.object({
-            original: Joi.string(),
-            thumbnail: Joi.string(),
-            processed: Joi.array().items(
-                Joi.object({
-                    resolution: Joi.string(),
-                    path: Joi.string()
-                })
-            )
-        })
-    })
-};
+export const updateMetadataSchema = z.object({
+    title: z.string().min(1).max(100).optional(),
+    description: z.string().max(5000).optional(),
+    tags: z.array(z.string()).max(10).optional(),
+    visibility: z.enum(['public', 'private']).optional()
+});
 
+export const videoQualitySchema = z.object({
+    quality: z.string()
+});

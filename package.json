@@ -41,7 +41,8 @@
     "multer": "^2.0.1",
     "nodemailer": "^7.0.3",
     "uuid": "^11.1.0",
-    "web3.storage": "^4.5.5"
+    "web3.storage": "^4.5.5",
+    "zod": "^3.25.63"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.9",

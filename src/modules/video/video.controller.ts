@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.middleware';
-import { VideoStatus, IVideo } from './video.model';
+import { VideoStatus, IVideo, Video } from './video.model';
 import { 
     createVideo, 
     getVideoById, 
     updateVideoStatus, 
     updateVideo, 
-    deleteVideo 
+    deleteVideo,
+    getUserVideos as getUserVideosFromDB,
+    updateVideoMetadata as updateVideoMetadataInDB,
+    incrementViewCount
 } from './video.crud';
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
@@ -38,6 +41,7 @@ export const processVideo = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
         const file = req.file;
+        const { title, description, tags, visibility } = req.body;
 
         if (!userId) {
             return res.status(401).json({
@@ -53,10 +57,14 @@ export const processVideo = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // Create initial video record
+        // Create initial video record with metadata
         const video = await createVideo({
             userId,
             originalName: file.originalname,
+            title: title || 'Untitled Video',
+            description: description || '',
+            tags: tags ? (typeof tags === 'string' ? tags.split(',') : tags) : [],
+            visibility: visibility || 'private',
             status: VideoStatus.PROCESSING
         });
 
@@ -338,4 +346,195 @@ async function processVideoAsync(videoId: string, file: Express.Multer.File) {
         await updateVideoStatus(videoId, VideoStatus.FAILED);
     }
 }
+
+// Get user's videos
+export const getUserVideos = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required'
+            });
+        }
+
+        const videos = await getUserVideosFromDB(userId);
+        res.json({
+            success: true,
+            videos
+        });
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+// Update video metadata
+export const updateVideoMetadata = async (req: AuthRequest, res: Response) => {
+    try {
+        const { videoId } = req.params;
+        const userId = req.user?.id;
+        const { title, description, tags, visibility } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required'
+            });
+        }
+
+        const video = await getVideoById(videoId);
+        if (!video) {
+            return res.status(404).json({
+                success: false,
+                error: 'Video not found'
+            });
+        }
+
+        if (video.userId !== userId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Not authorized to update this video'
+            });
+        }
+
+        const updatedVideo = await updateVideoMetadataInDB(videoId, {
+            title,
+            description,
+            tags,
+            visibility
+        });
+
+        res.json({
+            success: true,
+            video: updatedVideo
+        });
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+// Get video for viewing (public endpoint)
+export const getVideo = async (req: Request, res: Response) => {
+    try {
+        const { videoId } = req.params;
+        
+        const video = await getVideoById(videoId);
+        if (!video) {
+            return res.status(404).json({
+                success: false,
+                error: 'Video not found'
+            });
+        }
+
+        // If video is private, check authorization
+        if (video.visibility === 'private') {
+            const userId = (req as AuthRequest).user?.id;
+            if (!userId || video.userId !== userId) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'This video is private'
+                });
+            }
+        }
+
+        // Increment view count
+        await incrementViewCount(videoId);
+
+        // Prepare video data for frontend
+        const videoData = {
+            id: video._id,
+            title: video.title,
+            description: video.description,
+            creator: video.userId,
+            views: video.viewCount,
+            duration: video.metadata.duration,
+            createdAt: video.createdAt,
+            tags: video.tags,
+            sources: {
+                original: video.files.original.cdnUrl,
+                thumbnail: video.files.thumbnail.path,
+                // Available qualities for adaptive streaming
+                qualities: SUPPORTED_RESOLUTIONS.map(resolution => ({
+                    resolution,
+                    url: `/api/videos/${videoId}/quality?quality=${resolution}`
+                }))
+            }
+        };
+
+        res.json({
+            success: true,
+            video: videoData
+        });
+
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+// Get public videos for gallery
+export const getPublicVideos = async (req: Request, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
+
+        // Find all public videos, sorted by newest first
+        const videos = await Video.find({ visibility: 'public' })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .select({
+                title: 1,
+                description: 1,
+                userId: 1,
+                viewCount: 1,
+                'metadata.duration': 1,
+                'files.thumbnail.path': 1,
+                'files.original.cdnUrl': 1,
+                createdAt: 1
+            });
+
+        // Get total count for pagination
+        const total = await Video.countDocuments({ visibility: 'public' });
+
+        // Format videos for gallery display
+        const galleryVideos = videos.map((video: IVideo) => ({
+            id: video._id,
+            title: video.title,
+            creator: video.userId,
+            views: video.viewCount,
+            duration: video.metadata.duration,
+            thumbnail: video.files.thumbnail.path,
+            cdnUrl: video.files.original.cdnUrl,
+            createdAt: video.createdAt
+        }));
+
+        res.json({
+            success: true,
+            videos: galleryVideos,
+            pagination: {
+                current: page,
+                total: Math.ceil(total / limit),
+                hasMore: skip + videos.length < total
+            }
+        });
+
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+
 

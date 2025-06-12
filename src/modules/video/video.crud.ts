@@ -1,41 +1,39 @@
-import { IVideo, VideoInput, VideoStatus, Video } from './video.model';
+import { Video, VideoInput, IVideo } from './video.model';
 
-export const createVideo = async (data: VideoInput): Promise<IVideo> => {
-    const video = new Video(data);
+export const createVideo = async (videoData: VideoInput): Promise<IVideo> => {
+    const video = new Video(videoData);
     return await video.save();
 };
 
-export const getVideoById = async (videoId: string): Promise<IVideo | null> => {
-    return await Video.findById(videoId);
+export const getVideoById = async (id: string): Promise<IVideo | null> => {
+    return await Video.findById(id);
 };
 
-export const getVideosByUserId = async (userId: string): Promise<IVideo[]> => {
-    return await Video.find({ userId });
+export const getUserVideos = async (userId: string): Promise<IVideo[]> => {
+    return await Video.find({ userId }).sort({ createdAt: -1 });
 };
 
-export const updateVideoStatus = async (
-    videoId: string,
-    status: VideoStatus
+export const updateVideo = async (id: string, update: Partial<VideoInput>): Promise<IVideo | null> => {
+    return await Video.findByIdAndUpdate(id, update, { new: true });
+};
+
+export const updateVideoStatus = async (id: string, status: string): Promise<IVideo | null> => {
+    return await Video.findByIdAndUpdate(id, { status }, { new: true });
+};
+
+export const updateVideoMetadata = async (
+    id: string, 
+    metadata: { title?: string; description?: string; tags?: string[]; visibility?: 'public' | 'private' }
 ): Promise<IVideo | null> => {
-    return await Video.findByIdAndUpdate(
-        videoId,
-        { status },
-        { new: true }
-    );
+    return await Video.findByIdAndUpdate(id, { $set: metadata }, { new: true });
 };
 
-export const updateVideo = async (
-    videoId: string,
-    data: Partial<VideoInput>
-): Promise<IVideo | null> => {
-    return await Video.findByIdAndUpdate(
-        videoId,
-        { $set: data },
-        { new: true }
-    );
+export const deleteVideo = async (id: string): Promise<boolean> => {
+    const result = await Video.deleteOne({ _id: id });
+    return result.deletedCount === 1;
 };
 
-export const deleteVideo = async (videoId: string): Promise<IVideo | null> => {
-    return await Video.findByIdAndDelete(videoId);
+export const incrementViewCount = async (id: string): Promise<void> => {
+    await Video.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
 };
 

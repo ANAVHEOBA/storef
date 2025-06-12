@@ -1,12 +1,16 @@
 import { Router, RequestHandler } from 'express';
 import { authenticate } from '../../middleware/auth.middleware';
 import { validateRequest } from '../../middleware/validation.middleware';
-import { uploadSchema, videoIdSchema } from './video.schema';
+import { uploadSchema, videoIdSchema, updateMetadataSchema } from './video.schema';
 import { 
     processVideo, 
     getStatus, 
     getMetadata,
     getVideoQuality,
+    updateVideoMetadata,
+    getUserVideos,
+    getVideo,
+    getPublicVideos,
     deleteVideoHandler 
 } from './video.controller';
 import multer from 'multer';
@@ -14,7 +18,20 @@ import multer from 'multer';
 const router = Router();
 const upload = multer({ dest: 'uploads/' });
 
-// All routes require authentication
+// Public routes (no authentication required)
+router.get(
+    '/gallery',
+    validateRequest as RequestHandler,
+    getPublicVideos as RequestHandler
+);
+
+router.get(
+    '/:videoId',
+    validateRequest as RequestHandler,
+    getVideo as RequestHandler
+);
+
+// All other routes require authentication
 router.use(authenticate as RequestHandler);
 
 // Video processing routes
@@ -23,6 +40,13 @@ router.post(
     upload.single('file'),
     validateRequest as RequestHandler,
     processVideo as RequestHandler
+);
+
+// Get user's videos
+router.get(
+    '/my-videos',
+    validateRequest as RequestHandler,
+    getUserVideos as RequestHandler
 );
 
 router.get(
@@ -37,7 +61,14 @@ router.get(
     getMetadata as RequestHandler
 );
 
-// New route for getting specific video quality
+// Update video metadata
+router.patch(
+    '/:videoId/metadata',
+    validateRequest as RequestHandler,
+    updateVideoMetadata as RequestHandler
+);
+
+// Get specific video quality
 router.get(
     '/:videoId/quality',
     validateRequest as RequestHandler,

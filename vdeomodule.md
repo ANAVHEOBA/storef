@@ -26,8 +26,14 @@ Clean up temporary files
 
 
 
-a@a:~/storef$ curl -X POST http://localhost:5000/api/videos/process -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDY4OGMzNTNlNTQzZTAzMWYzYjAxOCIsImlhdCI6MTc0OTczNTc1MSwiZXhwIjoxNzQ5ODIyMTUxfQ.VLPEUsIlwZkbX5-VzsM_RFybTYMMh1UwLcQ70mAlVa8" -F "file=@6000210-uhd_2160_3840_24fps.mp4"
-{"success":true,"videoId":"684b2e12d41427f0518ef98b","message":"Video processing started"}a@a:~/storef
+a@a:~/storef$ curl -X POST http://localhost:5000/api/videos/process \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDY4OGMzNTNlNTQzZTAzMWYzYjAxOCIsImlhdCI6MTc0OTczNTc1MSwiZXhwIjoxNzQ5ODIyMTUxfQ.VLPEUsIlwZkbX5-VzsM_RFybTYMMh1UwLcQ70mAlVa8" \
+-F "file=@6000210-uhd_2160_3840_24fps.mp4" \
+-F "title=UHD Sample Video" \
+-F "description=High quality 4K UHD sample video for testing" \
+-F "tags=4k,uhd,sample" \
+-F "visibility=public"
+{"success":true,"videoId":"684b39df675cd76ad7c7d5b0","message":"Video processing started"}a@a:~/storef$ 
 
 
 
@@ -68,3 +74,51 @@ a@a:~/storef$ curl -X POST http://localhost:5000/api/videos/process -H "Authoriz
 
 
 curl -X GET "http://localhost:5000/api/videos/YOUR_VIDEO_ID/quality?quality=1280x720" -H "Authorization: Bearer YOUR_TOKEN"
+
+
+
+
+
+
+
+
+
+
+
+
+
+curl http://localhost:5000/api/videos/VIDEO_ID
+           
+
+
+           {
+    "success": true,
+    "video": {
+        "id": "VIDEO_ID",
+        "title": "UHD Sample Video",
+        "description": "High quality 4K UHD sample video for testing",
+        "creator": "USER_ID",
+        "views": 1,
+        "duration": 10.026667,
+        "createdAt": "2024-03-12T...",
+        "tags": ["4k", "uhd", "sample"],
+        "sources": {
+            "original": "https://0xC11...445C49.calibration.filcdn.io/baga6...rcni",
+            "thumbnail": "uploads/f2a86e24...thumb.jpg",
+            "qualities": [
+                {
+                    "resolution": "1920x1080",
+                    "url": "/api/videos/VIDEO_ID/quality?quality=1920x1080"
+                },
+                {
+                    "resolution": "1280x720",
+                    "url": "/api/videos/VIDEO_ID/quality?quality=1280x720"
+                },
+                {
+                    "resolution": "854x480",
+                    "url": "/api/videos/VIDEO_ID/quality?quality=854x480"
+                }
+            ]
+        }
+    }
+}
