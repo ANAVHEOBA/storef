@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { apiLimiter } from './middleware/rateLimit.middleware';
 import userRoutes from './modules/user/user.route';
 import fileRoutes from './modules/file/file.route';
+import videoRoutes from './modules/video/video.route';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(apiLimiter);
 // Routes
 app.use('/api/auth', userRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/videos', videoRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
