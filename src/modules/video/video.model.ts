@@ -16,11 +16,21 @@ export interface IVideo extends Document {
         resolutions: string[];
     };
     files: {
-        original: string;
-        thumbnail: string;
+        original: {
+            path: string;
+            cdnUrl?: string;
+            commp?: string;
+        };
+        thumbnail: {
+            path: string;
+            cdnUrl?: string;
+            commp?: string;
+        };
         processed: {
             resolution: string;
             path: string;
+            cdnUrl?: string;
+            commp?: string;
         }[];
     };
     createdAt: Date;
@@ -37,14 +47,30 @@ export interface VideoInput {
         resolutions: string[];
     };
     files?: {
-        original: string;
-        thumbnail: string;
+        original: {
+            path: string;
+            cdnUrl?: string;
+            commp?: string;
+        };
+        thumbnail: {
+            path: string;
+            cdnUrl?: string;
+            commp?: string;
+        };
         processed: {
             resolution: string;
             path: string;
+            cdnUrl?: string;
+            commp?: string;
         }[];
     };
 }
+
+const fileDetailSchema = {
+    path: { type: String },
+    cdnUrl: { type: String },
+    commp: { type: String },
+};
 
 const videoSchema = new Schema<IVideo>(
     {
@@ -61,11 +87,11 @@ const videoSchema = new Schema<IVideo>(
             resolutions: [{ type: String }]
         },
         files: {
-            original: { type: String },
-            thumbnail: { type: String },
+            original: fileDetailSchema,
+            thumbnail: fileDetailSchema,
             processed: [{
                 resolution: { type: String },
-                path: { type: String }
+                ...fileDetailSchema
             }]
         }
     },

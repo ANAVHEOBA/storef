@@ -10,6 +10,8 @@ import {
 } from './video.crud';
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
+import fs from 'fs';
+import { uploadFileToSynapse } from '../../services/synapse.service';
 
 // Process video upload
 export const processVideo = async (req: AuthRequest, res: Response) => {
@@ -188,96 +190,81 @@ async function processVideoAsync(videoId: string, file: Express.Multer.File) {
     const videoPath = file.path;
     
     try {
-        // 1. Probe video for metadata
+        // 1. Probe and perform initial DB update with metadata
         const metadata: ffmpeg.FfprobeData = await new Promise((resolve, reject) => {
             ffmpeg.ffprobe(videoPath, (err, data) => {
                 if (err) return reject(err);
                 resolve(data);
             });
         });
-
         const { duration, size } = metadata.format;
         const videoStream = metadata.streams.find(s => s.codec_type === 'video');
         const originalResolution = videoStream ? `${videoStream.width}x${videoStream.height}` : 'unknown';
         
-        // First-pass update: Save initial metadata so the user gets immediate feedback
-        await updateVideo(videoId, {
-            metadata: {
-                duration: duration || 0,
-                size: size || 0,
-                resolutions: [originalResolution]
-            },
-            files: {
-                original: videoPath,
-                thumbnail: '',
-                processed: [],
-            }
-        });
-        
-        // 2. Transcode to different resolutions and generate thumbnail
+        const videoToUpdate = await getVideoById(videoId);
+        if (!videoToUpdate) {
+            throw new Error('Video not found after probing.');
+        }
+
+        videoToUpdate.metadata = { duration: duration || 0, size: size || 0, resolutions: [originalResolution] };
+        videoToUpdate.files.original = { path: videoPath };
+        await videoToUpdate.save();
+
+        // 2. Transcode locally and generate thumbnail
         const targetResolutions = ['1920x1080', '1280x720'];
         const processedFiles: { resolution: string; path: string }[] = [];
         const outputDir = path.dirname(videoPath);
-
         const transcodingPromises = targetResolutions.map(res => {
             return new Promise<void>((resolve, reject) => {
-                const [width, height] = res.split('x').map(Number);
-                const outputFilename = `${path.basename(videoPath, path.extname(videoPath))}_${height}p.mp4`;
+                const outputFilename = `${path.basename(videoPath, path.extname(videoPath))}_${res.split('x')[1]}p.mp4`;
                 const outputPath = path.join(outputDir, outputFilename);
-
-                ffmpeg(videoPath)
-                    .videoCodec('libx264')
-                    .size(res)
-                    .on('error', (err) => {
-                        console.error(`Error transcoding to ${res}:`, err.message);
-                        reject(new Error(`Transcoding to ${res} failed`));
-                    })
+                ffmpeg(videoPath).videoCodec('libx264').size(res)
+                    .on('error', (err) => reject(new Error(`Transcoding to ${res} failed: ${err.message}`)))
                     .on('end', () => {
-                        console.log(`Finished transcoding to ${res}`);
                         processedFiles.push({ resolution: res, path: outputPath });
                         resolve();
-                    })
-                    .save(outputPath);
+                    }).save(outputPath);
             });
         });
-
         const thumbnailPromise = new Promise<string>((resolve, reject) => {
-            const thumbnailFilename = `${path.basename(videoPath, path.extname(videoPath))}_thumb.jpg`;
-            const thumbnailPath = path.join(outputDir, thumbnailFilename);
-
-            ffmpeg(videoPath)
-                .screenshots({
-                    timestamps: ['50%'],
-                    filename: thumbnailFilename,
-                    folder: outputDir,
-                    size: '640x360'
-                })
-                .on('end', () => {
-                    console.log('Thumbnail generated');
-                    resolve(thumbnailPath);
-                })
-                .on('error', (err) => {
-                    console.error('Error generating thumbnail:', err.message);
-                    reject(new Error('Thumbnail generation failed'));
-                });
+            const thumbFilename = `${path.basename(videoPath, path.extname(videoPath))}_thumb.jpg`;
+            const thumbPath = path.join(outputDir, thumbFilename);
+            ffmpeg(videoPath).screenshots({ timestamps: ['50%'], filename: thumbFilename, folder: outputDir, size: '640x360' })
+                .on('end', () => resolve(thumbPath))
+                .on('error', (err) => reject(new Error(`Thumbnail generation failed: ${err.message}`)));
         });
+
+        const [thumbnailPath] = await Promise.all([thumbnailPromise, Promise.all(transcodingPromises)]);
         
-        const [, thumbnailPath] = await Promise.all([
-            Promise.all(transcodingPromises),
-            thumbnailPromise
-        ]);
-
-        // Final update: Set status to COMPLETED and add processed files
+        // 3. Upload all generated files to Synapse
         const video = await getVideoById(videoId);
-        if (video) {
-            video.status = VideoStatus.COMPLETED;
-            video.files.processed = processedFiles;
-            video.files.thumbnail = thumbnailPath;
-            video.metadata.resolutions = [originalResolution, ...processedFiles.map(f => f.resolution)];
-            await video.save();
-        }
+        if (!video) throw new Error('Video not found after processing.');
 
-        console.log('Video processing completed and database updated.');
+        const originalUploadResult = await uploadFileToSynapse(videoPath);
+        video.files.original = { path: videoPath, ...originalUploadResult };
+
+        const thumbnailUploadResult = await uploadFileToSynapse(thumbnailPath);
+        video.files.thumbnail = { path: thumbnailPath, ...thumbnailUploadResult };
+
+        const processedFileUploads = await Promise.all(
+            processedFiles.map(async (file) => {
+                const { cdnUrl, commp } = await uploadFileToSynapse(file.path);
+                return { ...file, cdnUrl, commp };
+            })
+        );
+        video.files.processed = processedFileUploads;
+        
+        // 4. Final update and cleanup
+        video.status = VideoStatus.COMPLETED;
+        video.metadata.resolutions = [originalResolution, ...processedFiles.map(f => f.resolution)];
+        await video.save();
+        console.log('Video processing and Synapse upload completed.');
+
+        // 5. Cleanup local files
+        const filesToDelete = [videoPath, thumbnailPath, ...processedFiles.map(f => f.path)];
+        for (const filePath of filesToDelete) {
+            fs.promises.unlink(filePath).catch(err => console.error(`Failed to delete temp file ${filePath}`, err));
+        }
 
     } catch (error: any) {
         console.error('Video processing failed:', error.message);
