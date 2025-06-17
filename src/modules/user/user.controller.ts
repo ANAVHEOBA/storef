@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { createUser, findUserByEmail, findUserByUsername, updateUserVerification, updateVerificationCode } from './user.crud';
+import { AuthRequest } from '../../middleware/auth.middleware';
+import { createUser, findUserByEmail, findUserByUsername, updateUserVerification, updateVerificationCode, findUserById } from './user.crud';
 import { sendVerificationEmail } from '../../services/email.service';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -191,6 +192,44 @@ export const login = async (req: Request, res: Response) => {
                 email: user.email,
                 username: user.username,
                 isVerified: user.isVerified
+            }
+        });
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+export const getProfile = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required'
+            });
+        }
+
+        const user = await findUserById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            user: {
+                id: user._id,
+                email: user.email,
+                username: user.username,
+                isVerified: user.isVerified,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
             }
         });
     } catch (error: any) {

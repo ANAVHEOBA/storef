@@ -18,67 +18,77 @@ import multer from 'multer';
 const router = Router();
 const upload = multer({ dest: 'uploads/' });
 
-// Public routes (no authentication required)
+// --- PUBLIC ROUTES ---
+// Specific public routes should come first.
 router.get(
     '/gallery',
-    validateRequest as RequestHandler,
     getPublicVideos as RequestHandler
 );
 
-router.get(
-    '/:videoId',
-    validateRequest as RequestHandler,
-    getVideo as RequestHandler
-);
+// --- PROTECTED ROUTES ---
+// All routes below require authentication. We apply it individually
+// to control the route order.
 
-// All other routes require authentication
-router.use(authenticate as RequestHandler);
-
-// Video processing routes
-router.post(
-    '/process',
-    upload.single('file'),
-    validateRequest as RequestHandler,
-    processVideo as RequestHandler
-);
-
-// Get user's videos
+// Get user's own videos (specific route)
 router.get(
     '/my-videos',
-    validateRequest as RequestHandler,
+    authenticate as RequestHandler,
     getUserVideos as RequestHandler
 );
 
+// Process a new video
+router.post(
+    '/process',
+    authenticate as RequestHandler,
+    upload.single('file'),
+    processVideo as RequestHandler
+);
+
+// Get status for a video
 router.get(
     '/status/:videoId',
-    validateRequest as RequestHandler,
+    authenticate as RequestHandler,
     getStatus as RequestHandler
 );
 
+// Get metadata for a video
 router.get(
     '/metadata/:videoId',
-    validateRequest as RequestHandler,
+    authenticate as RequestHandler,
     getMetadata as RequestHandler
 );
 
 // Update video metadata
 router.patch(
     '/:videoId/metadata',
-    validateRequest as RequestHandler,
+    authenticate as RequestHandler,
     updateVideoMetadata as RequestHandler
 );
 
 // Get specific video quality
 router.get(
     '/:videoId/quality',
-    validateRequest as RequestHandler,
+    authenticate as RequestHandler,
     getVideoQuality as RequestHandler
 );
 
+// Delete a video
 router.delete(
     '/:videoId',
-    validateRequest as RequestHandler,
+    authenticate as RequestHandler,
     deleteVideoHandler as RequestHandler
 );
+
+
+// --- PUBLIC PARAMETERIZED ROUTE (MUST BE LAST) ---
+// This route for getting a single video is public, but has internal
+// checks for private videos. It must be last to avoid catching
+// more specific routes like /my-videos.
+router.get(
+    '/:videoId',
+    validateRequest as RequestHandler,
+    getVideo as RequestHandler
+);
+
 
 export default router;

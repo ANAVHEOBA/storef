@@ -26,12 +26,12 @@ export interface IVideo extends Document {
             cdnUrl?: string;
             commp?: string;
         };
-        thumbnail: {
+        thumbnail?: {
             path: string;
             cdnUrl?: string;
             commp?: string;
         };
-        processed: {
+        processed?: {
             resolution: string;
             path: string;
             cdnUrl?: string;

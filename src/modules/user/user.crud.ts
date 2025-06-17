@@ -47,3 +47,7 @@ export const updateVerificationCode = async (
         { new: true }
     );
 };
+
+export const findUserById = async (userId: string): Promise<IUser | null> => {
+    return User.findById(userId).select('-password -verificationCode -verificationCodeExpires');
+};

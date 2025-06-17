@@ -15,6 +15,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
 import fs from 'fs';
 import { uploadFileToSynapse } from '../../services/synapse.service';
+import os from 'os';
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
@@ -22,6 +23,9 @@ const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 const transcodingCache = new Map<string, { path: string; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour in milliseconds
 const SUPPORTED_RESOLUTIONS = ['1920x1080', '1280x720', '854x480'];
+
+// Use system temp directory for transcoding
+const TEMP_DIR = os.tmpdir();
 
 // Cleanup cache periodically
 setInterval(() => {
@@ -93,10 +97,6 @@ export const getVideoQuality = async (req: AuthRequest, res: Response) => {
         const { quality } = req.query;
         const userId = req.user?.id;
 
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Authentication required' });
-        }
-
         if (!quality || !SUPPORTED_RESOLUTIONS.includes(quality as string)) {
             return res.status(400).json({
                 success: false,
@@ -109,7 +109,8 @@ export const getVideoQuality = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ success: false, error: 'Video not found' });
         }
 
-        if (video.userId !== userId) {
+        // For public videos, don't check user ID
+        if (video.visibility === 'private' && (!userId || video.userId !== userId)) {
             return res.status(403).json({ success: false, error: 'Not authorized to access this video' });
         }
 
@@ -117,13 +118,15 @@ export const getVideoQuality = async (req: AuthRequest, res: Response) => {
         const cacheKey = `${videoId}-${quality}`;
         const cached = transcodingCache.get(cacheKey);
         if (cached && fs.existsSync(cached.path)) {
-            return res.sendFile(cached.path);
+            // Stream the file instead of loading it entirely into memory
+            const stream = fs.createReadStream(cached.path);
+            stream.pipe(res);
+            return;
         }
 
         // If not in cache, transcode on-the-fly
-        const outputDir = 'uploads';
         const outputFilename = `${videoId}_${quality}_${Date.now()}.mp4`;
-        const outputPath = path.join(outputDir, outputFilename);
+        const outputPath = path.join(TEMP_DIR, outputFilename);
 
         await new Promise<void>((resolve, reject) => {
             ffmpeg(video.files.original.cdnUrl)
@@ -141,7 +144,20 @@ export const getVideoQuality = async (req: AuthRequest, res: Response) => {
                 .save(outputPath);
         });
 
-        res.sendFile(outputPath);
+        // Stream the newly transcoded file
+        const stream = fs.createReadStream(outputPath);
+        stream.pipe(res);
+
+        // Schedule cleanup after streaming
+        stream.on('end', () => {
+            // Keep in cache for CACHE_TTL
+            setTimeout(() => {
+                fs.unlink(outputPath, (err) => {
+                    if (err) console.error(`Failed to delete temp file ${outputPath}:`, err);
+                    transcodingCache.delete(cacheKey);
+                });
+            }, CACHE_TTL);
+        });
 
     } catch (error: any) {
         res.status(500).json({
@@ -310,15 +326,15 @@ async function processVideoAsync(videoId: string, file: Express.Multer.File) {
         await videoToUpdate.save();
         console.log('Original file uploaded successfully to FileCDN');
 
-        // 3. Generate thumbnail only
+        // 3. Generate thumbnail in uploads directory
         const thumbFilename = `${path.basename(videoPath, path.extname(videoPath))}_thumb.jpg`;
-        const thumbPath = path.join(path.dirname(videoPath), thumbFilename);
+        const thumbPath = path.join('uploads', thumbFilename);
         await new Promise<void>((resolve, reject) => {
             ffmpeg(videoPath)
                 .screenshots({
                     timestamps: ['50%'],
                     filename: thumbFilename,
-                    folder: path.dirname(videoPath),
+                    folder: 'uploads',
                     size: '640x360'
                 })
                 .on('end', () => resolve())
