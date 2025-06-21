@@ -15,6 +15,8 @@ export interface IVideo extends Document {
     visibility: 'public' | 'private';
     tags: string[];
     viewCount: number;
+    likesCount: number;
+    commentsCount: number;
     metadata: {
         duration: number;
         size: number;
@@ -99,6 +101,8 @@ const videoSchema = new Schema<IVideo>(
         },
         tags: [{ type: String }],
         viewCount: { type: Number, default: 0 },
+        likesCount: { type: Number, default: 0 },
+        commentsCount: { type: Number, default: 0 },
         metadata: {
             duration: { type: Number, default: 0 },
             size: { type: Number, default: 0 },
@@ -117,3 +121,42 @@ const videoSchema = new Schema<IVideo>(
 );
 
 export const Video = model<IVideo>('Video', videoSchema);
+
+export interface IComment extends Document {
+    userId: string;
+    videoId: string;
+    content: string;
+    parentCommentId?: string; // For replies
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+const commentSchema = new Schema<IComment>(
+    {
+        userId: { type: String, required: true, ref: 'User' },
+        videoId: { type: String, required: true, ref: 'Video' },
+        content: { type: String, required: true, trim: true, maxlength: 5000 },
+        parentCommentId: { type: Schema.Types.ObjectId, ref: 'Comment' }
+    },
+    { timestamps: true }
+);
+
+export const Comment = model<IComment>('Comment', commentSchema);
+
+export interface ILike extends Document {
+    userId: string;
+    videoId: string;
+    createdAt: Date;
+}
+
+const likeSchema = new Schema<ILike>(
+    {
+        userId: { type: String, required: true, ref: 'User' },
+        videoId: { type: String, required: true, ref: 'Video' }
+    },
+    { timestamps: { createdAt: true, updatedAt: false } }
+);
+
+likeSchema.index({ userId: 1, videoId: 1 }, { unique: true });
+
+export const Like = model<ILike>('Like', likeSchema);

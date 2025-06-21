@@ -5,8 +5,8 @@
 # Build output
 /dist
 
-# User uploads
-/uploads
+# Temporary Scripts
+/src/temp-drop-videos.ts
 
 # Environment variables
 .env

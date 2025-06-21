@@ -1,10 +1,10 @@
 import lighthouse from '@lighthouse-web3/sdk';
-import { config } from 'dotenv';
+import { config as dotenvConfig } from 'dotenv';
 import { writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-config();
+dotenvConfig();
 
 // Define response types
 interface LighthouseUploadResponse {
@@ -33,7 +33,7 @@ interface FilecoinResponse {
     error?: string;
 }
 
-export class FilecoinStorageService {
+class FilecoinStorageService {
     private lighthouseApiKey: string;
     private readonly MAX_RETRIES = 3;
     private readonly RETRY_DELAY = 1000; // 1 second

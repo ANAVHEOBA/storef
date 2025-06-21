@@ -18,3 +18,16 @@ export const updateMetadataSchema = z.object({
 export const videoQualitySchema = z.object({
     quality: z.string()
 });
+
+export const createCommentSchema = z.object({
+    content: z.string().min(1).max(5000),
+    parentCommentId: z.string().optional()
+});
+
+export const updateCommentSchema = z.object({
+    content: z.string().min(1).max(5000)
+});
+
+export const commentIdSchema = z.object({
+    commentId: z.string()
+});

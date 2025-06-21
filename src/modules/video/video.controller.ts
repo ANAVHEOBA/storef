@@ -9,7 +9,13 @@ import {
     deleteVideo,
     getUserVideos as getUserVideosFromDB,
     updateVideoMetadata as updateVideoMetadataInDB,
-    incrementViewCount
+    incrementViewCount,
+    createComment,
+    getCommentsByVideoId,
+    getCommentById,
+    updateComment,
+    toggleLike,
+    getLikesCount
 } from './video.crud';
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
@@ -68,7 +74,7 @@ export const processVideo = async (req: AuthRequest, res: Response) => {
             title: title || 'Untitled Video',
             description: description || '',
             tags: tags ? (typeof tags === 'string' ? tags.split(',') : tags) : [],
-            visibility: visibility || 'private',
+            visibility: visibility || 'public',
             status: VideoStatus.PROCESSING
         });
 
@@ -474,7 +480,7 @@ export const getVideo = async (req: Request, res: Response) => {
             tags: video.tags,
             sources: {
                 original: video.files.original.cdnUrl,
-                thumbnail: video.files.thumbnail.path,
+                thumbnail: video.files.thumbnail ? video.files.thumbnail.path : '',
                 // Available qualities for adaptive streaming
                 qualities: SUPPORTED_RESOLUTIONS.map(resolution => ({
                     resolution,
@@ -529,7 +535,7 @@ export const getPublicVideos = async (req: Request, res: Response) => {
             creator: video.userId,
             views: video.viewCount,
             duration: video.metadata.duration,
-            thumbnail: video.files.thumbnail.path,
+            thumbnail: video.files.thumbnail ? video.files.thumbnail.path : '',
             cdnUrl: video.files.original.cdnUrl,
             createdAt: video.createdAt
         }));
@@ -549,6 +555,102 @@ export const getPublicVideos = async (req: Request, res: Response) => {
             success: false,
             error: error.message
         });
+    }
+};
+
+// --- Comments Controllers ---
+
+export const addComment = async (req: AuthRequest, res: Response) => {
+    try {
+        const { videoId } = req.params;
+        const userId = req.user?.id;
+        const { content, parentCommentId } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'Authentication required' });
+        }
+
+        const comment = await createComment(userId, videoId, content, parentCommentId);
+        res.status(201).json({ success: true, comment });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+export const getVideoComments = async (req: Request, res: Response) => {
+    try {
+        const { videoId } = req.params;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        const { comments, total } = await getCommentsByVideoId(videoId, page, limit);
+
+        res.json({
+            success: true,
+            comments,
+            pagination: {
+                current: page,
+                total: Math.ceil(total / limit),
+                hasMore: page * limit < total
+            }
+        });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+export const editComment = async (req: AuthRequest, res: Response) => {
+    try {
+        const { commentId } = req.params;
+        const userId = req.user?.id;
+        const { content } = req.body;
+
+        const comment = await getCommentById(commentId);
+        if (!comment) {
+            return res.status(404).json({ success: false, error: 'Comment not found' });
+        }
+
+        if (comment.userId !== userId) {
+            return res.status(403).json({ success: false, error: 'Not authorized to edit this comment' });
+        }
+
+        const updatedComment = await updateComment(commentId, content);
+        res.json({ success: true, comment: updatedComment });
+
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// --- Likes Controllers ---
+
+export const toggleLikeOnVideo = async (req: AuthRequest, res: Response) => {
+    try {
+        const { videoId } = req.params;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'Authentication required' });
+        }
+
+        const result = await toggleLike(userId, videoId);
+        res.json({ success: true, ...result });
+
+    } catch (error: any) {
+        if (error.code === 11000) { // Handle unique index constraint error for race conditions
+            return res.status(409).json({ success: false, error: 'Like/Unlike action already in progress or completed.' });
+        }
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+export const getVideoLikesCount = async (req: Request, res: Response) => {
+    try {
+        const { videoId } = req.params;
+        const likesCount = await getLikesCount(videoId);
+        res.json({ success: true, likesCount });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 

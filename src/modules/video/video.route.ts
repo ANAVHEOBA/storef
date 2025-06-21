@@ -11,7 +11,12 @@ import {
     getUserVideos,
     getVideo,
     getPublicVideos,
-    deleteVideoHandler 
+    deleteVideoHandler,
+    addComment,
+    getVideoComments,
+    editComment,
+    toggleLikeOnVideo,
+    getVideoLikesCount
 } from './video.controller';
 import multer from 'multer';
 
@@ -79,6 +84,35 @@ router.delete(
     deleteVideoHandler as RequestHandler
 );
 
+// --- Comment Routes ---
+router.post(
+    '/:videoId/comments',
+    authenticate as RequestHandler,
+    addComment as RequestHandler
+);
+
+router.get(
+    '/:videoId/comments',
+    getVideoComments as RequestHandler
+);
+
+router.put(
+    '/comments/:commentId',
+    authenticate as RequestHandler,
+    editComment as RequestHandler
+);
+
+// --- Like Routes ---
+router.post(
+    '/:videoId/like',
+    authenticate as RequestHandler,
+    toggleLikeOnVideo as RequestHandler
+);
+
+router.get(
+    '/:videoId/likes',
+    getVideoLikesCount as RequestHandler
+);
 
 // --- PUBLIC PARAMETERIZED ROUTE (MUST BE LAST) ---
 // This route for getting a single video is public, but has internal

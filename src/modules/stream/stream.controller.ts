@@ -180,12 +180,15 @@ export const stopStream = async (req: AuthRequest, res: Response) => {
             userId: stream.userId,
             title: `Live Stream from ${stream.createdAt.toLocaleDateString()}`,
             description: `Recording of live stream started at ${stream.createdAt.toISOString()}`,
+            originalName: `${streamId}.m3u8`,
             status: VideoStatus.COMPLETED,
             files: {
                 original: {
                     path: finalManifestUrl, // The manifest URL is the path for HLS
                     cdnUrl: finalManifestUrl
                 },
+                thumbnail: { path: '', cdnUrl: '' },
+                processed: [],
             },
             metadata: {
                 duration: totalDuration,
