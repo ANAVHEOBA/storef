@@ -97,15 +97,15 @@ To run the backend service locally:
     ```
 
 2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
+```bash
+npm install
+```
 
 3.  **Set up environment variables:**
     Copy the example `.env.example` file to a new `.env` file and fill in the required values (e.g., Database connection string, JWT secret, Synapse API Key).
-    ```bash
-    cp .env.example .env
-    ```
+```bash
+cp .env.example .env
+```
 
 4.  **Run the server:**
     ```bash
