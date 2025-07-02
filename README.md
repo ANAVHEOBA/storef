@@ -4,7 +4,7 @@ StreamSphere is a feature-rich video streaming application built to demonstrate 
 
 **Hackathon:** ⚡️ Build a low latency application using PDP and FilCDN
 
-**Live Demo:** `[Link to your live Angular application]`
+
 
 ## ✨ Features
 
@@ -42,6 +42,7 @@ This project was architected specifically to meet the core requirements of the h
 ## 🛠️ Technology Stack
 
 - **Backend:** Node.js, Express.js, TypeScript
+- **Frontend:** Angular, TypeScript
 - **Database:** MongoDB with Mongoose
 - **Decentralized Storage:** Filecoin
 - **CDN:** FilCDN (via Synapse)
@@ -88,6 +89,10 @@ The backend exposes a RESTful API for all platform functionalities.
 
 ## ⚙️ Local Setup
 
+This project contains both a backend and a frontend application.
+
+### Backend Setup
+
 To run the backend service locally:
 
 1.  **Clone the repository:**
@@ -113,6 +118,20 @@ cp .env.example .env
     ```
     The server will be running on `http://localhost:5000`.
 
+### Frontend Setup
+
+1.  **Navigate to the frontend directory:**
+    ```bash
+    cd frontend
+    ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Run the development server:**
+    ```bash
+    ng serve
+    ```
+    The frontend application will be available at `http://localhost:4200`.
 
 
-https://0xC11af1a53f16c1863d0BB06857c87Ae433445C49.calibration.filcdn.io/baga6ea4seaqifra6g7i35zef35ufug6p6pohhkoltfakmymhs4zeztr6x4voqba
