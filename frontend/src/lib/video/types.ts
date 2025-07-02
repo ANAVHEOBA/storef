@@ -8,6 +8,8 @@ export interface Video {
   thumbnail: string;
   cdnUrl: string;
   createdAt: string;
+  likes: number;
+  isLiked: boolean;
 }
 
 // Pagination interface from API response
@@ -22,6 +24,11 @@ export interface VideoGalleryResponse {
   success: boolean;
   videos: Video[];
   pagination: Pagination;
+}
+
+export interface VideoResponse {
+  success: boolean;
+  video: Video;
 }
 
 // API Error interface

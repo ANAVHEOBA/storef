@@ -16,6 +16,8 @@ export class RegisterComponent {
   isLoading = false;
   error: string | null = null;
   verificationCode: string | null = null;
+  passwordVisible = false;
+  confirmPasswordVisible = false;
 
   constructor(
     private fb: FormBuilder,
@@ -34,6 +36,14 @@ export class RegisterComponent {
     }, {
       validators: this.passwordMatchValidator
     });
+  }
+
+  togglePasswordVisibility(field: 'password' | 'confirmPassword'): void {
+    if (field === 'password') {
+      this.passwordVisible = !this.passwordVisible;
+    } else if (field === 'confirmPassword') {
+      this.confirmPasswordVisible = !this.confirmPasswordVisible;
+    }
   }
 
   /**

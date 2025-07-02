@@ -71,6 +71,10 @@ import { ProfileUser } from '../../../../lib/profile/types';
                 <i class="fas fa-upload"></i>
                 <span>Upload Video</span>
               </a>
+              <a routerLink="/dashboard/go-live" class="nav-link" (click)="closeSidebar()">
+                <i class="fas fa-broadcast-tower"></i>
+                <span>Go Live</span>
+              </a>
               <button class="auth-button logout" (click)="logout()">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sign Out</span>

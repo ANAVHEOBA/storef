@@ -55,6 +55,19 @@
   }
 }
 
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .toggle-password {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    color: var(--text-secondary);
+  }
+}
+
 .error-text {
   margin-top: 4px;
   color: #ff4444;

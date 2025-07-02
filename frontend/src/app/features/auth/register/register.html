@@ -46,12 +46,15 @@
       <!-- Password Field -->
       <div class="form-group">
         <label for="password">Password</label>
-        <input 
-          type="password" 
-          id="password"
-          formControlName="password"
-          [class.error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
-        >
+        <div class="password-wrapper">
+          <input 
+            [type]="passwordVisible ? 'text' : 'password'" 
+            id="password"
+            formControlName="password"
+            [class.error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+          >
+          <i class="toggle-password fa" [ngClass]="{'fa-eye-slash': passwordVisible, 'fa-eye': !passwordVisible}" (click)="togglePasswordVisibility('password')"></i>
+        </div>
         <div class="error-text" *ngIf="registerForm.get('password')?.touched">
           {{ getErrorMessage('password') }}
         </div>
@@ -60,12 +63,15 @@
       <!-- Confirm Password Field -->
       <div class="form-group">
         <label for="confirmPassword">Confirm Password</label>
-        <input 
-          type="password" 
-          id="confirmPassword"
-          formControlName="confirmPassword"
-          [class.error]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched"
-        >
+        <div class="password-wrapper">
+          <input 
+            [type]="confirmPasswordVisible ? 'text' : 'password'" 
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            [class.error]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched"
+          >
+          <i class="toggle-password fa" [ngClass]="{'fa-eye-slash': confirmPasswordVisible, 'fa-eye': !confirmPasswordVisible}" (click)="togglePasswordVisibility('confirmPassword')"></i>
+        </div>
         <div class="error-text" *ngIf="registerForm.get('confirmPassword')?.touched">
           {{ getErrorMessage('confirmPassword') }}
         </div>

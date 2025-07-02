@@ -8,6 +8,7 @@ import { DashboardComponent } from './features/dashboard/dashboard';
 import { authGuard } from './core/guards/auth.guard';
 import { UploadComponent } from './features/upload/upload.component';
 import { MyVideosComponent } from './features/dashboard/my-videos/my-videos';
+import { LiveComponent } from './features/live/live.component';
 
 export const routes: Routes = [
   {
@@ -47,6 +48,10 @@ export const routes: Routes = [
       {
         path: 'my-videos',
         component: MyVideosComponent
+      },
+      {
+        path: 'go-live',
+        component: LiveComponent
       },
       {
         path: 'settings',

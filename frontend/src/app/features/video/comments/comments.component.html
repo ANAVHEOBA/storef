@@ -1,0 +1,76 @@
+<div class="comments-section">
+  <div class="comments-header">
+    <h3>Comments ({{ comments.length }})</h3>
+    <button (click)="toggleCommentsVisibility()">
+      <i class="fas" [ngClass]="{'fa-chevron-up': commentsVisible, 'fa-chevron-down': !commentsVisible}"></i>
+      <span class="toggle-text">{{ commentsVisible ? 'Hide' : 'Show' }}</span>
+    </button>
+  </div>
+
+  <div *ngIf="commentsVisible" class="comments-body">
+    <div *ngIf="isLoggedIn()" class="comment-form">
+      <div class="comment-avatar">
+        <img *ngIf="currentUser" src="https://i.pravatar.cc/40?u={{currentUser.id}}" alt="Your Avatar">
+        <div *ngIf="!currentUser" class="avatar-initials">{{ getUserInitial(currentUser) }}</div>
+      </div>
+      <form [formGroup]="commentForm" (ngSubmit)="onSubmit()" class="form-wrapper">
+        <div class="form-group">
+          <textarea 
+            formControlName="content"
+            placeholder="Add a comment..."
+            rows="1"
+            (input)="autoResize($event)"
+          ></textarea>
+        </div>
+        <div class="form-actions" *ngIf="commentForm.get('content')?.value">
+          <span class="char-counter">
+            {{ commentForm.get('content')?.value?.length || 0 }}/500
+          </span>
+          <div class="action-buttons">
+            <button type="button" class="cancel" (click)="commentForm.reset()">Cancel</button>
+            <button type="submit" [disabled]="commentForm.invalid || isLoading">
+              {{ isLoading ? 'Posting...' : 'Post' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div *ngIf="!isLoggedIn()" class="auth-prompt">
+      <p>You must be <a routerLink="/login">logged in</a> to post a comment.</p>
+    </div>
+
+    <div class="comments-list">
+      <div *ngFor="let comment of comments" class="comment-item">
+        <div class="comment-avatar">
+          <img src="https://i.pravatar.cc/40?u={{comment.userId._id}}" alt="User Avatar">
+        </div>
+        <div class="comment-content-wrapper">
+          <div class="comment-author">
+            <strong>{{ comment.userId.username }}</strong>
+            <span class="comment-date">{{ comment.createdAt | date:'short' }}</span>
+          </div>
+          <div class="comment-body" *ngIf="editingCommentId !== comment._id">
+            <p>{{ comment.content }}</p>
+          </div>
+          <div class="comment-actions" *ngIf="isLoggedIn() && editingCommentId !== comment._id">
+            <button class="action-btn"><i class="fas fa-thumbs-up"></i></button>
+            <button class="action-btn"><i class="fas fa-thumbs-down"></i></button>
+            <button class="action-btn" (click)="enableEditing(comment)">Edit</button>
+            <button class="action-btn" (click)="deleteComment(comment._id)">Delete</button>
+          </div>
+          <div class="edit-form" *ngIf="editingCommentId === comment._id">
+            <textarea [(ngModel)]="comment.content" name="edit-comment" class="edit-textarea" rows="3"></textarea>
+            <div class="edit-actions">
+              <button (click)="cancelEditing()" class="cancel" [disabled]="updatingCommentId === comment._id">Cancel</button>
+              <button (click)="saveComment(comment)" class="save" [disabled]="updatingCommentId === comment._id">
+                {{ updatingCommentId === comment._id ? 'Saving...' : 'Save' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p *ngIf="comments.length === 0" class="no-comments">Be the first to comment!</p>
+    </div>
+  </div>
+</div> 

@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { LoginApiService } from '../../../../lib/login/api';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
     <div class="login">
       <h2>Sign In</h2>
@@ -30,12 +30,15 @@ import { LoginApiService } from '../../../../lib/login/api';
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input 
-            type="password" 
-            id="password"
-            formControlName="password"
-            placeholder="Enter your password"
-          >
+          <div class="password-wrapper">
+            <input 
+              [type]="passwordVisible ? 'text' : 'password'"
+              id="password"
+              formControlName="password"
+              placeholder="Enter your password"
+            >
+            <i class="toggle-password fa" [ngClass]="{'fa-eye-slash': passwordVisible, 'fa-eye': !passwordVisible}" (click)="togglePasswordVisibility()"></i>
+          </div>
           <div class="error" *ngIf="loginForm.get('password')?.errors?.['required'] && loginForm.get('password')?.touched">
             Password is required
           </div>
@@ -63,6 +66,7 @@ export class LoginComponent {
   message = '';
   success = false;
   returnUrl: string;
+  passwordVisible = false;
 
   constructor(
     private fb: FormBuilder,
@@ -82,6 +86,10 @@ export class LoginComponent {
     if (this.loginApi.isLoggedIn()) {
       this.router.navigate([this.returnUrl]);
     }
+  }
+
+  togglePasswordVisibility(): void {
+    this.passwordVisible = !this.passwordVisible;
   }
 
   onSubmit() {

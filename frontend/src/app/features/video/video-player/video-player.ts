@@ -1,13 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Video } from '../../../../lib/video/types';
 import { VideoApiService } from '../../../../lib/video/api';
+import { CommentsComponent } from '../comments/comments.component';
+import { LikeApiService } from '../../../../lib/like/api';
+import { LoginApiService } from '../../../../lib/login/api';
 
 @Component({
   selector: 'app-video-player',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CommentsComponent],
   templateUrl: './video-player.html',
   styleUrls: ['./video-player.scss']
 })
@@ -18,10 +21,14 @@ export class VideoPlayerComponent implements OnInit {
   isPlaying = false;
   currentTime = 0;
   volume = 1;
+  isLiking = false;
 
   constructor(
     private route: ActivatedRoute,
-    private videoApi: VideoApiService
+    private videoApi: VideoApiService,
+    private likeApi: LikeApiService,
+    private loginApi: LoginApiService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -86,6 +93,30 @@ export class VideoPlayerComponent implements OnInit {
     const videoElement = document.querySelector('video');
     if (videoElement) {
       videoElement.volume = value;
+    }
+  }
+
+  toggleLike(): void {
+    if (!this.loginApi.isLoggedIn()) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+    
+    if (this.video && !this.isLiking) {
+      this.isLiking = true;
+      this.likeApi.likeVideo(this.video.id).subscribe({
+        next: (response) => {
+          if (response.success && this.video) {
+            this.video.isLiked = response.liked;
+            this.video.likes = response.likesCount;
+          }
+          this.isLiking = false;
+        },
+        error: () => {
+          this.isLiking = false;
+          // Optionally handle like error
+        }
+      });
     }
   }
 }

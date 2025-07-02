@@ -29,5 +29,15 @@
         <span class="date">{{ video.createdAt | date }}</span>
       </div>
     </div>
+    <div class="video-actions">
+      <button class="action-btn like-btn" (click)="toggleLike()" [disabled]="isLiking" [class.liked]="video.isLiked">
+        <i class="fas fa-thumbs-up"></i>
+        <span>{{ video.likes }}</span>
+      </button>
+      <!-- Other actions like share can go here -->
+    </div>
+
+    <!-- Comments Section -->
+    <app-comments [videoId]="video.id"></app-comments>
   </ng-container>
 </div>

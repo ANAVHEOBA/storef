@@ -1,0 +1,133 @@
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.live-container {
+  width: 100%;
+  max-width: 900px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h2 {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #e53e3e;
+      font-weight: 600;
+      font-size: 1rem;
+      
+      .fa-circle {
+        animation: pulse 1.5s infinite;
+      }
+    }
+  }
+
+  .video-wrapper {
+    position: relative;
+    background: #000;
+    margin-bottom: 24px;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+
+    video {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    .placeholder {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-secondary);
+
+      .fa-video {
+        font-size: 4rem;
+        margin-bottom: 16px;
+      }
+    }
+  }
+
+  .error-message {
+    color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+
+    .primary-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      background-color: var(--accent-color);
+      color: white;
+      font-weight: 500;
+      transition: all 0.2s;
+
+      &:disabled {
+        background-color: var(--border-color);
+        cursor: not-allowed;
+      }
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+
+      &.go-live-btn {
+        background-color: #38a169;
+      }
+
+      &.stop-btn {
+        background-color: #e53e3e;
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+} 

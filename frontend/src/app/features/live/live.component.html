@@ -1,0 +1,32 @@
+<div class="live-container">
+  <div class="header">
+    <h2>Go Live</h2>
+    <div *ngIf="isStreaming" class="live-indicator">
+      <i class="fas fa-circle"></i> LIVE
+    </div>
+  </div>
+  
+  <div class="video-wrapper">
+    <video #videoPlayer autoplay muted playsinline></video>
+    <div *ngIf="!mediaStream" class="placeholder">
+      <i class="fas fa-video"></i>
+      <p>Your camera is off</p>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div class="controls">
+    <button *ngIf="!mediaStream" (click)="startPreview()" [disabled]="isLoading" class="primary-btn">
+      <i class="fas fa-camera"></i> Start Camera
+    </button>
+    <button *ngIf="mediaStream && !isStreaming" (click)="startStreaming()" [disabled]="isLoading" class="primary-btn go-live-btn">
+      <i class="fas fa-broadcast-tower"></i> {{ isLoading ? 'Starting...' : 'Go Live' }}
+    </button>
+    <button *ngIf="isStreaming" (click)="stopStreaming()" class="primary-btn stop-btn">
+      <i class="fas fa-stop-circle"></i> Stop Streaming
+    </button>
+  </div>
+</div> 
