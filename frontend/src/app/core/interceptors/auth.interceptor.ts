@@ -28,13 +28,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         Authorization: `Bearer ${token}`
       }
     });
-  } else {
-    if (req.url.includes('/videos/') || req.url.includes('/profile/')) {
-      loginService.logout();
-      router.navigate(['/login'], {
-        queryParams: { returnUrl: router.url }
-      });
-    }
   }
 
   return next(req).pipe(

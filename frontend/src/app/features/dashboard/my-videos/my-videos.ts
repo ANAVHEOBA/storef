@@ -83,7 +83,9 @@ export class MyVideosComponent implements OnInit {
       views: videoDetails.viewCount || 0,
       createdAt: videoDetails.createdAt,
       cdnUrl: videoDetails.files?.original?.cdnUrl || '',
-      creator: videoDetails.userId
+      creator: videoDetails.userId,
+      likes: 0,
+      isLiked: false
     };
     console.log('Mapped video:', mappedVideo);
     return mappedVideo;

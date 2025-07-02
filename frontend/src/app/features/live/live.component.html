@@ -19,11 +19,9 @@
   </div>
 
   <div class="controls">
-    <button *ngIf="!mediaStream" (click)="startPreview()" [disabled]="isLoading" class="primary-btn">
-      <i class="fas fa-camera"></i> Start Camera
-    </button>
-    <button *ngIf="mediaStream && !isStreaming" (click)="startStreaming()" [disabled]="isLoading" class="primary-btn go-live-btn">
-      <i class="fas fa-broadcast-tower"></i> {{ isLoading ? 'Starting...' : 'Go Live' }}
+    <button (click)="mediaStream ? startStreaming() : startPreview()" [disabled]="isLoading" class="primary-btn go-live-btn">
+      <i class="fas" [ngClass]="{'fa-camera': !mediaStream, 'fa-broadcast-tower': mediaStream}"></i>
+      {{ isLoading ? 'Starting...' : (mediaStream ? 'Go Live' : 'Start Camera') }}
     </button>
     <button *ngIf="isStreaming" (click)="stopStreaming()" class="primary-btn stop-btn">
       <i class="fas fa-stop-circle"></i> Stop Streaming
