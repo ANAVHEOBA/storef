@@ -1,0 +1,22 @@
+<!-- Video Card Container -->
+<div class="video-card" (click)="onVideoClick()">
+  <!-- Thumbnail Section -->
+  <div class="thumbnail-container">
+    <img 
+      [src]="getThumbnailUrl()" 
+      [alt]="video.title"
+      class="thumbnail"
+    >
+    <div class="duration">{{ formatDuration(video.duration) }}</div>
+  </div>
+
+  <!-- Video Information -->
+  <div class="video-info">
+    <h3 class="title">{{ video.title }}</h3>
+    <div class="metadata">
+      <span class="views">{{ formatViews(video.views) }} views</span>
+      <span class="dot">•</span>
+      <span class="date">{{ video.createdAt | date:'mediumDate' }}</span>
+    </div>
+  </div>
+</div>

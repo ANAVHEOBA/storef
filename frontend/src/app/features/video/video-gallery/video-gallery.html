@@ -1,0 +1,32 @@
+<div class="video-gallery">
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading videos...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error) {
+    <div class="error-state">
+      <p>{{ error }}</p>
+      <button class="btn" (click)="loadVideos()">Try Again</button>
+    </div>
+  }
+
+  <!-- Videos Grid -->
+  @if (!isLoading && !error) {
+    @if (videos.length > 0) {
+      <div class="videos-grid">
+        @for (video of videos; track video.id) {
+          <app-video-card [video]="video"></app-video-card>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <p>No videos found</p>
+      </div>
+    }
+  }
+</div>

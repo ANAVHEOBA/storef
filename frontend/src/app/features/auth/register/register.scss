@@ -1,0 +1,128 @@
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--primary-bg);
+}
+
+.register-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  h1 {
+    margin: 0 0 24px;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--primary-text);
+    text-align: center;
+  }
+}
+
+.form-group {
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--primary-text);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+    color: var(--primary-text);
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    &.error {
+      border-color: #ff4444;
+    }
+  }
+}
+
+.error-text {
+  margin-top: 4px;
+  color: #ff4444;
+  font-size: 12px;
+}
+
+.error-message {
+  padding: 12px;
+  margin-bottom: 16px;
+  background-color: #ffebee;
+  color: #ff4444;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.success-message {
+  padding: 16px;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 4px;
+  text-align: center;
+  margin-bottom: 16px;
+
+  .verification-code {
+    font-size: 24px;
+    font-weight: 500;
+    margin-top: 8px;
+    padding: 8px;
+    background: #c8e6c9;
+    border-radius: 4px;
+  }
+}
+
+.submit-button {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--accent-color);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.login-link {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--secondary-text);
+
+  a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

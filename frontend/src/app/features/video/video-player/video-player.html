@@ -1,0 +1,33 @@
+<div class="video-player">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    Loading video...
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    {{ error }}
+  </div>
+
+  <!-- Video Player -->
+  <ng-container *ngIf="!isLoading && !error && video">
+    <video 
+      [src]="video.cdnUrl"
+      (timeupdate)="onTimeUpdate($event)"
+      class="video-element"
+      controls
+      controlsList="nodownload"
+      preload="metadata"
+    >
+      Your browser does not support the video tag.
+    </video>
+
+    <div class="video-info">
+      <h1 class="video-title">{{ video.title }}</h1>
+      <div class="video-metadata">
+        <span class="views">{{ video.views }} views</span>
+        <span class="date">{{ video.createdAt | date }}</span>
+      </div>
+    </div>
+  </ng-container>
+</div>

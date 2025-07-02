@@ -1,0 +1,35 @@
+.dashboard-container {
+    padding: 24px;
+    min-height: calc(100vh - 56px); // Subtract header height
+  background-color: var(--primary-bg);
+}
+
+.dashboard-header {
+  margin-bottom: 32px;
+  
+  h1 {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--primary-text);
+  }
+  
+  p {
+    font-size: 16px;
+    color: var(--secondary-text);
+    margin: 0;
+  }
+}
+
+.dashboard-content {
+  background-color: var(--surface-bg);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+// The video gallery component will use its own styles
+app-video-gallery {
+  display: block;
+  margin-top: 24px;
+} 

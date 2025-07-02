@@ -1,0 +1,176 @@
+.upload-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h1 {
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    font-size: 24px;
+  }
+
+  .upload-form {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 24px;
+
+    .upload-box {
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &.drag-over {
+        border-color: var(--accent-color);
+        background: rgba(62, 166, 255, 0.1);
+      }
+
+      i {
+        font-size: 48px;
+        color: var(--accent-color);
+        margin-bottom: 16px;
+      }
+
+      p {
+        color: var(--text-secondary);
+        margin: 8px 0;
+      }
+
+      .select-button {
+        background: var(--accent-color);
+        color: var(--bg-base);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 16px;
+        transition: background 0.2s;
+
+        &:hover {
+          background: #1a73e8;
+        }
+      }
+    }
+
+    .form-group {
+      margin-top: 24px;
+
+      h2 {
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        font-size: 18px;
+      }
+
+      .input-group {
+        margin-bottom: 16px;
+
+        label {
+          display: block;
+          color: var(--text-secondary);
+          margin-bottom: 8px;
+          font-size: 14px;
+        }
+
+        input, textarea, select {
+          width: 100%;
+          padding: 12px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          background: var(--bg-base);
+          color: var(--text-primary);
+          font-size: 14px;
+
+          &:focus {
+            border-color: var(--accent-color);
+            outline: none;
+          }
+        }
+
+        textarea {
+          resize: vertical;
+          min-height: 80px;
+        }
+      }
+
+      .selected-file {
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-color);
+
+        p {
+          color: var(--text-secondary);
+          margin-bottom: 16px;
+        }
+
+        .upload-button {
+          background: var(--accent-color);
+          color: var(--bg-base);
+          border: none;
+          padding: 12px 32px;
+          border-radius: 4px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.2s;
+
+          &:hover {
+            background: #1a73e8;
+          }
+        }
+      }
+    }
+  }
+
+  .upload-progress {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+
+    .progress-container {
+      max-width: 400px;
+      margin: 0 auto;
+
+      .progress-bar {
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        margin-bottom: 16px;
+        overflow: hidden;
+
+        .progress {
+          height: 100%;
+          background: var(--accent-color);
+          transition: width 0.3s ease;
+        }
+      }
+
+      p {
+        color: var(--text-primary);
+        margin-bottom: 16px;
+      }
+
+      .cancel-button {
+        background: transparent;
+        color: #ff4444;
+        border: 1px solid #ff4444;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(255, 68, 68, 0.1);
+        }
+      }
+    }
+  }
+
+  .error-message {
+    color: #ff4444;
+    margin-top: 16px;
+    text-align: center;
+  }
+} 

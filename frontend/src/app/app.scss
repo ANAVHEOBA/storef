@@ -1,0 +1,179 @@
+// Base theme colors
+:root {
+  --primary-bg: #FFFFFF;     // Main white background
+  --header-bg: #FFFFFF;      // White header
+  --secondary-bg: #F9F9F9;   // Light gray for secondary elements
+  --hover-bg: #F2F2F2;       // Hover state gray
+  --surface-bg: #FFFFFF;     // Surface elements background
+  --primary-text: #0F0F0F;   // Almost black text
+  --secondary-text: #606060; // YouTube's gray text
+  --accent-color: #065FD4;   // YouTube's blue
+  --accent-hover: #0F5FD4;   // Darker blue for hover
+  --link-color: #065FD4;     // YouTube's link blue
+  --border-color: #E5E5E5;   // YouTube's border color
+}
+
+// Global styles
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
+  font-family: 'Roboto', 'Arial', sans-serif;
+}
+
+// Layout styles
+.app-container {
+  min-height: 100vh;
+  background-color: var(--primary-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+// Header styles
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  height: 56px;
+  background: var(--header-bg);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--border-color);
+
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .menu-button {
+      background: none;
+      border: none;
+      color: var(--primary-text);
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 50%;
+
+      &:hover {
+        background: var(--hover-bg);
+      }
+
+      i {
+        font-size: 20px;
+      }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--primary-text);
+      text-decoration: none;
+      font-size: 20px;
+      font-weight: 500;
+
+      i {
+        color: #ff0000;
+        font-size: 24px;
+      }
+    }
+  }
+
+  .right {
+      .sign-in-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        background: none;
+        color: var(--accent-color);
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        i {
+          font-size: 18px;
+        }
+
+        &:hover {
+        background: var(--hover-bg);
+      }
+    }
+  }
+}
+
+// Main content styles
+main {
+  margin-top: 56px;
+  flex: 1;
+  padding: 24px;
+  background-color: var(--primary-bg);
+}
+
+// Component styles
+.card {
+  background-color: var(--surface-bg);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// Button styles
+.btn {
+  background-color: var(--accent-color);
+  color: var(--primary-text);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--accent-hover);
+  }
+}
+
+.menu-button,
+.user-button {
+  background: transparent;
+  border: none;
+  color: var(--primary-text);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--hover-bg);
+  }
+}
+
+.logo {
+  color: var(--primary-text);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+// Link styles
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
